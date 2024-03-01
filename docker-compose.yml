@@ -1,0 +1,69 @@
+version: '3.1'
+
+services:
+
+  php:
+    restart: "no"
+    build:
+      context: docker/php
+    volumes:
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+      - ./storage:/var/www/storage
+      - ./public_html:/var/www/public_html
+    environment:
+      PHP_IDE_CONFIG: serverName=PHPSTORM
+      XDEBUG_SESSION: PHPSTORM
+    networks:
+      - app
+
+  apache:
+    restart: "no"
+    build:
+      context: docker/apache
+    volumes:
+      - ./storage:/var/www/storage
+      - ./public_html:/var/www/public_html
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+      - db
+    networks:
+      - app
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/public_html
+
+  db:
+    restart: "no"
+    image: mariadb:latest
+    networks:
+      - app
+    environment:
+      MARIADB_ROOT_PASSWORD: admin
+      MARIADB_USER: dev
+      MARIADB_PASSWORD: pass
+      MARIADB_DATABASE: site
+    volumes:
+      - ./db_files/mariadb:/var/lib/mysql
+      - ./db_files/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: "no"
+    depends_on: [db]
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: admin
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 1G
+    networks:
+      - app
+    ports:
+      - "8080:80"
+
+networks:
+  app:
+    driver: bridge

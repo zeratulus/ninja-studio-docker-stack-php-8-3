@@ -1,0 +1,10 @@
+#exclude dev directories
+.idea
+.git
+qodana
+db_files/mariadb
+dev
+*.log
+dev.*
+node_modules
+vendor
